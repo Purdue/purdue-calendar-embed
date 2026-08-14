@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 namespace Purdue\CalendarBlock\Feed;
 
-use SimplePie\SimplePie;
 use WP_Error;
 
 if (!defined('ABSPATH')) {
@@ -133,13 +132,13 @@ final class FeedClient
      * whole site's feed cache from 12 hours to ten minutes and re-tune feeds belonging to
      * other plugins, so they are added and removed around our own request.
      *
-     * @return SimplePie|WP_Error
+     * @return \SimplePie\SimplePie|WP_Error
      */
-    private function fetchFeed(string $url): SimplePie|WP_Error
+    private function fetchFeed(string $url)
     {
         $lifetime = fn(): int => $this->ttl();
 
-        $options = static function (SimplePie $feed): void {
+        $options = static function ($feed): void {
             $feed->set_timeout(15);
             // Localist orders the feed by start date; SimplePie would re-sort by pubDate.
             $feed->enable_order_by_date(false);

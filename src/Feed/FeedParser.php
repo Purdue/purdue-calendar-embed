@@ -9,7 +9,6 @@ declare(strict_types=1);
 namespace Purdue\CalendarBlock\Feed;
 
 use DateTimeImmutable;
-use SimplePie\Item;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -17,6 +16,11 @@ if (!defined('ABSPATH')) {
 
 /**
  * Normalizes Localist RSS items into Event objects.
+ *
+ * Feed items are deliberately not type-declared. WordPress renamed SimplePie's classes in
+ * 6.7 (SimplePie_Item -> SimplePie\Item) when it moved to SimplePie 1.8; a hard type hint
+ * for either name fatals on the other. Every method called here exists on both, so the
+ * types live in docblocks where they inform static analysis without binding the runtime.
  */
 final class FeedParser
 {
@@ -33,7 +37,7 @@ final class FeedParser
     private const TITLE_DATE_PREFIX = '/^[A-Z][a-z]{2}\s+\d{1,2},\s+\d{4}:\s*/';
 
     /**
-     * @param array<int, Item> $items
+     * @param array<int, \SimplePie\Item> $items
      *
      * @return list<Event>
      */
@@ -48,7 +52,10 @@ final class FeedParser
         return $events;
     }
 
-    private function parseItem(Item $item): Event
+    /**
+     * @param \SimplePie\Item $item
+     */
+    private function parseItem($item): Event
     {
         $rawTitle = (string) $item->get_title();
         $name = trim((string) preg_replace(self::TITLE_DATE_PREFIX, '', $rawTitle));
@@ -72,8 +79,10 @@ final class FeedParser
      * SimplePie's 'U' format preserves that offset. Formatting to a display string and
      * running it back through strtotime() -- as the purdue-home-theme news block does --
      * silently drops it.
+     *
+     * @param \SimplePie\Item $item
      */
-    private function parseDate(Item $item): ?DateTimeImmutable
+    private function parseDate($item): ?DateTimeImmutable
     {
         $timestamp = $item->get_date('U');
 
@@ -89,8 +98,10 @@ final class FeedParser
     /**
      * The description is a rendered artifact, not data: Localist's calendar/_feed_event
      * Liquid template appends a "View on site | Email this event" paragraph to every item.
+     *
+     * @param \SimplePie\Item $item
      */
-    private function parseDescription(Item $item): string
+    private function parseDescription($item): string
     {
         $description = (string) $item->get_description();
 
@@ -103,7 +114,10 @@ final class FeedParser
         return trim(wp_strip_all_tags($description));
     }
 
-    private function parseImageUrl(Item $item): string
+    /**
+     * @param \SimplePie\Item $item
+     */
+    private function parseImageUrl($item): string
     {
         $tags = $item->get_item_tags(self::NS_MEDIA, 'content');
 
@@ -123,9 +137,11 @@ final class FeedParser
     }
 
     /**
+     * @param \SimplePie\Item $item
+     *
      * @return list<string>
      */
-    private function parseCategories(Item $item): array
+    private function parseCategories($item): array
     {
         $categories = $item->get_categories();
 
@@ -146,7 +162,10 @@ final class FeedParser
         return $labels;
     }
 
-    private function parseGeo(Item $item, string $element): ?float
+    /**
+     * @param \SimplePie\Item $item
+     */
+    private function parseGeo($item, string $element): ?float
     {
         $tags = $item->get_item_tags(self::NS_GEO, $element);
 
