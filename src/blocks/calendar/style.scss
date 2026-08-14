@@ -1,0 +1,103 @@
+.purdue-calendar-block {
+  --pcb-gold: #cfb991;
+  --pcb-rule: #e0e0e0;
+  --pcb-muted: #555;
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  &__item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--pcb-rule);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  &__media {
+    flex: 0 0 8rem;
+  }
+
+  &__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-height: 6rem;
+    object-fit: cover;
+  }
+
+  &__body {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__date {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--pcb-muted);
+  }
+
+  &__title {
+    margin: 0.25rem 0;
+    font-size: 1.0625rem;
+    line-height: 1.3;
+  }
+
+  &__link {
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      text-decoration: underline;
+    }
+  }
+
+  &__category {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    background: var(--pcb-gold);
+    color: #000;
+  }
+
+  &__description {
+    margin: 0.5rem 0 0;
+    font-size: 0.875rem;
+    color: var(--pcb-muted);
+  }
+
+  &__notice {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    background: #f6f7f7;
+    border-left: 4px solid var(--pcb-gold);
+  }
+
+  // Card layout: same markup, grid instead of stacked rows.
+  &--cards &__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: 1.5rem;
+  }
+
+  &--cards &__item {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  &--cards &__media {
+    flex: 0 0 auto;
+  }
+
+  &--cards &__image {
+    max-height: 10rem;
+  }
+}

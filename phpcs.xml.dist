@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<ruleset name="PurdueCalendarBlock">
+    <description>PSR-12, matching the PHP standard used across Purdue's WordPress repos.</description>
+
+    <file>src</file>
+    <file>index.php</file>
+
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="sp"/>
+
+    <rule ref="PSR12"/>
+
+    <!--
+        Every file guards on `if (!defined('ABSPATH')) { exit; }` before declaring its
+        class. That is the standard WordPress direct-access guard and is deliberate.
+    -->
+    <rule ref="PSR1.Files.SideEffects.FoundWithSymbols">
+        <severity>0</severity>
+    </rule>
+
+    <!-- WordPress plugin headers are single-line by definition and cannot wrap. -->
+    <rule ref="Generic.Files.LineLength">
+        <exclude-pattern>index.php</exclude-pattern>
+    </rule>
+
+    <!-- Block templates interleave HTML and PHP; PSR-12 line rules do not apply. -->
+    <exclude-pattern>src/blocks/*/render.php</exclude-pattern>
+</ruleset>

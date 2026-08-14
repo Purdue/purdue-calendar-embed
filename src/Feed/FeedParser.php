@@ -1,0 +1,161 @@
+<?php
+
+/**
+ * @package Purdue/CalendarBlock
+ */
+
+declare(strict_types=1);
+
+namespace Purdue\CalendarBlock\Feed;
+
+use DateTimeImmutable;
+use SimplePie\Item;
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/**
+ * Normalizes Localist RSS items into Event objects.
+ */
+final class FeedParser
+{
+    /** Yahoo Media RSS -- carries the event photo as <media:content url="..."/>. */
+    private const NS_MEDIA = 'http://search.yahoo.com/mrss/';
+
+    /** W3C Basic Geo -- <geo:lat> / <geo:long>, present on roughly half of items. */
+    private const NS_GEO = 'http://www.w3.org/2003/01/geo/wgs84_pos#';
+
+    /**
+     * Localist prefixes every RSS title with the instance date, e.g.
+     * "Aug 14, 2026: Volleyball -  Purdue vs. Ball State at West Lafayette, Ind."
+     */
+    private const TITLE_DATE_PREFIX = '/^[A-Z][a-z]{2}\s+\d{1,2},\s+\d{4}:\s*/';
+
+    /**
+     * @param array<int, Item> $items
+     *
+     * @return list<Event>
+     */
+    public function parse(array $items): array
+    {
+        $events = [];
+
+        foreach ($items as $item) {
+            $events[] = $this->parseItem($item);
+        }
+
+        return $events;
+    }
+
+    private function parseItem(Item $item): Event
+    {
+        $rawTitle = (string) $item->get_title();
+        $name = trim((string) preg_replace(self::TITLE_DATE_PREFIX, '', $rawTitle));
+
+        return new Event(
+            guid: (string) $item->get_id(),
+            name: $name !== '' ? $name : $rawTitle,
+            permalink: (string) $item->get_link(),
+            startsAt: $this->parseDate($item),
+            description: $this->parseDescription($item),
+            imageUrl: $this->parseImageUrl($item),
+            categories: $this->parseCategories($item),
+            latitude: $this->parseGeo($item, 'lat'),
+            longitude: $this->parseGeo($item, 'long'),
+        );
+    }
+
+    /**
+     * Localist emits both <pubDate> and <dc:date>, each carrying a real UTC offset.
+     *
+     * SimplePie's 'U' format preserves that offset. Formatting to a display string and
+     * running it back through strtotime() -- as the purdue-home-theme news block does --
+     * silently drops it.
+     */
+    private function parseDate(Item $item): ?DateTimeImmutable
+    {
+        $timestamp = $item->get_date('U');
+
+        if ($timestamp === null) {
+            return null;
+        }
+
+        $date = DateTimeImmutable::createFromFormat('U', (string) $timestamp);
+
+        return $date === false ? null : $date->setTimezone(wp_timezone());
+    }
+
+    /**
+     * The description is a rendered artifact, not data: Localist's calendar/_feed_event
+     * Liquid template appends a "View on site | Email this event" paragraph to every item.
+     */
+    private function parseDescription(Item $item): string
+    {
+        $description = (string) $item->get_description();
+
+        $description = (string) preg_replace(
+            '#<p>\s*<a[^>]*>\s*View on site\s*</a>.*?</p>\s*$#is',
+            '',
+            $description
+        );
+
+        return trim(wp_strip_all_tags($description));
+    }
+
+    private function parseImageUrl(Item $item): string
+    {
+        $tags = $item->get_item_tags(self::NS_MEDIA, 'content');
+
+        if (!is_array($tags)) {
+            return '';
+        }
+
+        foreach ($tags as $tag) {
+            $url = $tag['attribs']['']['url'] ?? '';
+
+            if (is_string($url) && $url !== '') {
+                return $url;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function parseCategories(Item $item): array
+    {
+        $categories = $item->get_categories();
+
+        if (!is_array($categories)) {
+            return [];
+        }
+
+        $labels = [];
+
+        foreach ($categories as $category) {
+            $label = trim((string) $category->get_label());
+
+            if ($label !== '' && !in_array($label, $labels, true)) {
+                $labels[] = $label;
+            }
+        }
+
+        return $labels;
+    }
+
+    private function parseGeo(Item $item, string $element): ?float
+    {
+        $tags = $item->get_item_tags(self::NS_GEO, $element);
+
+        if (!is_array($tags)) {
+            return null;
+        }
+
+        $value = $tags[0]['data'] ?? '';
+
+        return is_numeric($value) ? (float) $value : null;
+    }
+}

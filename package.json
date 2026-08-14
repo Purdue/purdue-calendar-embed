@@ -1,0 +1,21 @@
+{
+  "name": "purdue-calendar-block",
+  "version": "0.1.0",
+  "description": "Gutenberg block that renders Localist events from the events.purdue.edu RSS feed",
+  "license": "GPL-3.0-or-later",
+  "private": true,
+  "scripts": {
+    "build": "wp-scripts build",
+    "start": "wp-scripts start",
+    "packages-update": "wp-scripts packages-update",
+    "plugin-zip": "wp-scripts plugin-zip",
+    "env": "wp-env"
+  },
+  "devDependencies": {
+    "@wordpress/env": "^11.13.0",
+    "@wordpress/scripts": "^34.1.0"
+  },
+  "dependencies": {
+    "@wordpress/server-side-render": "^6.3.0"
+  }
+}
