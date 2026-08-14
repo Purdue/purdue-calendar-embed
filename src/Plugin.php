@@ -8,8 +8,6 @@ declare(strict_types=1);
 
 namespace Purdue\CalendarBlock;
 
-use Purdue\CalendarBlock\Feed\FeedClient;
-
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -22,9 +20,6 @@ final class Plugin
     public function __construct()
     {
         add_action('init', [$this, 'registerBlocks']);
-
-        FeedClient::registerFeedCacheLifetime();
-        FeedClient::registerFeedOptions();
     }
 
     public function registerBlocks(): void

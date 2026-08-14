@@ -50,7 +50,7 @@ final class FeedClient
             return new FeedResult($this->hydrate($cached));
         }
 
-        $rss = fetch_feed($url);
+        $rss = $this->fetchFeed($url);
 
         if ($rss instanceof WP_Error) {
             return $this->fallback($key, $rss);
@@ -125,29 +125,34 @@ final class FeedClient
     }
 
     /**
-     * SimplePie caches raw XML separately from our normalized cache; keep the two aligned
-     * so a stale SimplePie copy cannot outlive the events we derived from it.
+     * Calls fetch_feed() with our SimplePie tuning applied only for the duration of the
+     * call.
+     *
+     * These two hooks are global -- wp_feed_cache_transient_lifetime and wp_feed_options
+     * fire for every feed WordPress fetches. Registering them permanently would drop the
+     * whole site's feed cache from 12 hours to ten minutes and re-tune feeds belonging to
+     * other plugins, so they are added and removed around our own request.
+     *
+     * @return SimplePie|WP_Error
      */
-    public static function registerFeedCacheLifetime(): void
+    private function fetchFeed(string $url): SimplePie|WP_Error
     {
-        add_filter(
-            'wp_feed_cache_transient_lifetime',
-            static fn(): int => (int) apply_filters(
-                'purdue_calendar_block_cache_ttl',
-                self::DEFAULT_TTL
-            )
-        );
-    }
+        $lifetime = fn(): int => $this->ttl();
 
-    /**
-     * SimplePie strips most markup by default; the Localist description is trusted HTML
-     * from our own calendar, and we strip tags ourselves in the parser.
-     */
-    public static function registerFeedOptions(): void
-    {
-        add_action('wp_feed_options', static function (SimplePie $feed): void {
+        $options = static function (SimplePie $feed): void {
             $feed->set_timeout(15);
+            // Localist orders the feed by start date; SimplePie would re-sort by pubDate.
             $feed->enable_order_by_date(false);
-        });
+        };
+
+        add_filter('wp_feed_cache_transient_lifetime', $lifetime);
+        add_action('wp_feed_options', $options);
+
+        try {
+            return fetch_feed($url);
+        } finally {
+            remove_filter('wp_feed_cache_transient_lifetime', $lifetime);
+            remove_action('wp_feed_options', $options);
+        }
     }
 }
