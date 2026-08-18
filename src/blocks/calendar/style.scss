@@ -1,7 +1,7 @@
-.purdue-calendar-block {
-  --pcb-gold: #cfb991;
-  --pcb-rule: #e0e0e0;
-  --pcb-muted: #555;
+.purdue-calendar-embed {
+  --pce-gold: #cfb991;
+  --pce-rule: #e0e0e0;
+  --pce-muted: #555;
 
   &__list {
     list-style: none;
@@ -13,7 +13,7 @@
     display: flex;
     gap: 1rem;
     padding: 1rem 0;
-    border-bottom: 1px solid var(--pcb-rule);
+    border-bottom: 1px solid var(--pce-rule);
 
     &:last-child {
       border-bottom: 0;
@@ -40,7 +40,7 @@
   &__date {
     display: block;
     font-size: 0.8125rem;
-    color: var(--pcb-muted);
+    color: var(--pce-muted);
   }
 
   &__title {
@@ -62,21 +62,21 @@
     display: inline-block;
     padding: 0.125rem 0.5rem;
     font-size: 0.75rem;
-    background: var(--pcb-gold);
+    background: var(--pce-gold);
     color: #000;
   }
 
   &__description {
     margin: 0.5rem 0 0;
     font-size: 0.875rem;
-    color: var(--pcb-muted);
+    color: var(--pce-muted);
   }
 
   &__notice {
     padding: 0.75rem 1rem;
     font-size: 0.875rem;
     background: #f6f7f7;
-    border-left: 4px solid var(--pcb-gold);
+    border-left: 4px solid var(--pce-gold);
   }
 
   // Card layout: same markup, grid instead of stacked rows.

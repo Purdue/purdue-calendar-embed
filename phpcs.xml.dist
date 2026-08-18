@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ruleset name="PurdueCalendarBlock">
+<ruleset name="PurdueCalendarEmbed">
     <description>PSR-12, matching the PHP standard used across Purdue's WordPress repos.</description>
 
     <file>src</file>

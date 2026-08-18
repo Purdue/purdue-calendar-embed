@@ -7,7 +7,7 @@
   "category": "widgets",
   "description": "Renders Localist events from the events.purdue.edu RSS feed, or embeds a Localist widget.",
   "keywords": ["events", "calendar", "localist"],
-  "textdomain": "purdue-calendar-block",
+  "textdomain": "purdue-calendar-embed",
   "supports": {
     "html": false
   },

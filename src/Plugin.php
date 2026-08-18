@@ -1,12 +1,12 @@
 <?php
 
 /**
- * @package Purdue/CalendarBlock
+ * @package Purdue/CalendarEmbed
  */
 
 declare(strict_types=1);
 
-namespace Purdue\CalendarBlock;
+namespace Purdue\CalendarEmbed;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -24,7 +24,7 @@ final class Plugin
 
     public function registerBlocks(): void
     {
-        $blocks = glob(PURDUE_CALENDAR_BLOCK_PATH . 'build/blocks/*/block.json') ?: [];
+        $blocks = glob(PURDUE_CALENDAR_EMBED_PATH . 'build/blocks/*/block.json') ?: [];
 
         foreach ($blocks as $block) {
             register_block_type(dirname($block));

@@ -1,5 +1,5 @@
 {
-    "name": "purdue/wp-plugin-calendar-block",
+    "name": "purdue/calendar-embed",
     "description": "Gutenberg block that renders Localist events from the events.purdue.edu RSS feed",
     "type": "wordpress-plugin",
     "license": "GPL-3.0-or-later",
@@ -22,7 +22,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Purdue\\CalendarBlock\\": "src/"
+            "Purdue\\CalendarEmbed\\": "src/"
         }
     },
     "scripts": {

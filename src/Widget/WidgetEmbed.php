@@ -1,12 +1,12 @@
 <?php
 
 /**
- * @package Purdue/CalendarBlock
+ * @package Purdue/CalendarEmbed
  */
 
 declare(strict_types=1);
 
-namespace Purdue\CalendarBlock\Widget;
+namespace Purdue\CalendarEmbed\Widget;
 
 use DOMDocument;
 

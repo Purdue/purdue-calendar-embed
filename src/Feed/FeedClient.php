@@ -1,12 +1,12 @@
 <?php
 
 /**
- * @package Purdue/CalendarBlock
+ * @package Purdue/CalendarEmbed
  */
 
 declare(strict_types=1);
 
-namespace Purdue\CalendarBlock\Feed;
+namespace Purdue\CalendarEmbed\Feed;
 
 use WP_Error;
 
@@ -61,8 +61,8 @@ final class FeedClient
             return $this->fallback(
                 $key,
                 new WP_Error(
-                    'purdue_calendar_block_empty_feed',
-                    __('The Localist feed returned no events.', 'purdue-calendar-block')
+                    'purdue_calendar_embed_empty_feed',
+                    __('The Localist feed returned no events.', 'purdue-calendar-embed')
                 )
             );
         }
@@ -120,7 +120,7 @@ final class FeedClient
          *
          * @param int $ttl Seconds.
          */
-        return (int) apply_filters('purdue_calendar_block_cache_ttl', self::DEFAULT_TTL);
+        return (int) apply_filters('purdue_calendar_embed_cache_ttl', self::DEFAULT_TTL);
     }
 
     /**

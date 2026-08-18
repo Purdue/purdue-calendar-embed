@@ -1,4 +1,4 @@
-# Purdue Calendar Block
+# Purdue Calendar Embed
 
 A WordPress block that renders Localist events from the [events.purdue.edu](https://events.purdue.edu)
 RSS feed, with the Localist widget embed available as a fallback rendering mode.
@@ -83,7 +83,7 @@ So the block caches **normalized events**, not raw XML:
 Adjust the fresh TTL with:
 
 ```php
-add_filter( 'purdue_calendar_block_cache_ttl', fn() => 5 * MINUTE_IN_SECONDS );
+add_filter( 'purdue_calendar_embed_cache_ttl', fn() => 5 * MINUTE_IN_SECONDS );
 ```
 
 ## Finding event type IDs

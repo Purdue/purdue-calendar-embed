@@ -3,36 +3,36 @@
 /**
  * Server-side render for the purdue/calendar block.
  *
- * @package Purdue/CalendarBlock
+ * @package Purdue/CalendarEmbed
  *
  * @var array<string, mixed> $attributes
  */
 
 declare(strict_types=1);
 
-use Purdue\CalendarBlock\Feed\Event;
-use Purdue\CalendarBlock\Feed\FeedClient;
-use Purdue\CalendarBlock\Feed\FeedFilter;
-use Purdue\CalendarBlock\Feed\FeedUrl;
-use Purdue\CalendarBlock\Widget\WidgetEmbed;
+use Purdue\CalendarEmbed\Feed\Event;
+use Purdue\CalendarEmbed\Feed\FeedClient;
+use Purdue\CalendarEmbed\Feed\FeedFilter;
+use Purdue\CalendarEmbed\Feed\FeedUrl;
+use Purdue\CalendarEmbed\Widget\WidgetEmbed;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-if (!function_exists('purdue_calendar_block_notice')) {
+if (!function_exists('purdue_calendar_embed_notice')) {
     /**
      * Editor-only placeholder. Nothing is emitted on the front end so a failing feed
      * never leaves a broken shell on a live page.
      */
-    function purdue_calendar_block_notice(string $message): string
+    function purdue_calendar_embed_notice(string $message): string
     {
         if (!is_admin() && !defined('REST_REQUEST')) {
             return '';
         }
 
         return sprintf(
-            '<div class="purdue-calendar-block__notice">%s</div>',
+            '<div class="purdue-calendar-embed__notice">%s</div>',
             esc_html($message)
         );
     }
@@ -51,8 +51,8 @@ if ($mode === 'widget') {
     $embed = WidgetEmbed::fromSnippet((string) ($attributes['widgetSnippet'] ?? ''), $containerId);
 
     if ($embed === null) {
-        echo purdue_calendar_block_notice(
-            __('Paste a Localist widget embed snippet to display events.', 'purdue-calendar-block')
+        echo purdue_calendar_embed_notice(
+            __('Paste a Localist widget embed snippet to display events.', 'purdue-calendar-embed')
         );
         return;
     }
@@ -68,7 +68,7 @@ if ($mode === 'widget') {
     printf(
         // get_block_wrapper_attributes() returns an already-escaped attribute string.
         '<div %s><div id="%s" class="localist-widget"></div></div>',
-        get_block_wrapper_attributes(['class' => 'purdue-calendar-block']),
+        get_block_wrapper_attributes(['class' => 'purdue-calendar-embed']),
         esc_attr($embed->containerId)
     );
     return;
@@ -91,10 +91,10 @@ $url = (new FeedUrl())->build(
 $result = (new FeedClient())->fetch($url);
 
 if (is_wp_error($result)) {
-    echo purdue_calendar_block_notice(
+    echo purdue_calendar_embed_notice(
         sprintf(
             /* translators: %s: error message from the feed request. */
-            __('Could not load events: %s', 'purdue-calendar-block'),
+            __('Could not load events: %s', 'purdue-calendar-embed'),
             $result->get_error_message()
         )
     );
@@ -109,8 +109,8 @@ $events = (new FeedFilter())->apply(
 );
 
 if ($events === []) {
-    echo purdue_calendar_block_notice(
-        __('No upcoming events matched these settings.', 'purdue-calendar-block')
+    echo purdue_calendar_embed_notice(
+        __('No upcoming events matched these settings.', 'purdue-calendar-embed')
     );
     return;
 }
@@ -120,7 +120,7 @@ $showDescription = (bool) ($attributes['showDescription'] ?? true);
 $showCategory = (bool) ($attributes['showCategory'] ?? true);
 
 $wrapper = get_block_wrapper_attributes([
-    'class' => 'purdue-calendar-block purdue-calendar-block--' . $layout,
+    'class' => 'purdue-calendar-embed purdue-calendar-embed--' . $layout,
 ]);
 
 $dateFormat = (string) get_option('date_format', 'F j, Y');
@@ -128,17 +128,17 @@ $timeFormat = (string) get_option('time_format', 'g:i a');
 
 ?>
 <div <?php echo $wrapper; // phpcs:ignore -- already escaped by core. ?>>
-    <ul class="purdue-calendar-block__list">
+    <ul class="purdue-calendar-embed__list">
         <?php foreach ($events as $event) : ?>
             <?php
             /** @var Event $event */
             $category = $showCategory ? $event->primaryCategory() : '';
             ?>
-            <li class="purdue-calendar-block__item">
+            <li class="purdue-calendar-embed__item">
                 <?php if ($showImage && $event->imageUrl !== '') : ?>
-                    <div class="purdue-calendar-block__media">
+                    <div class="purdue-calendar-embed__media">
                         <img
-                            class="purdue-calendar-block__image"
+                            class="purdue-calendar-embed__image"
                             src="<?php echo esc_url($event->imageUrl); ?>"
                             alt=""
                             loading="lazy"
@@ -147,10 +147,10 @@ $timeFormat = (string) get_option('time_format', 'g:i a');
                     </div>
                 <?php endif; ?>
 
-                <div class="purdue-calendar-block__body">
+                <div class="purdue-calendar-embed__body">
                     <?php if ($event->startsAt !== null) : ?>
                         <time
-                            class="purdue-calendar-block__date"
+                            class="purdue-calendar-embed__date"
                             datetime="<?php echo esc_attr($event->startsAt->format(DATE_ATOM)); ?>"
                         >
                             <?php
@@ -161,18 +161,18 @@ $timeFormat = (string) get_option('time_format', 'g:i a');
                         </time>
                     <?php endif; ?>
 
-                    <h3 class="purdue-calendar-block__title">
-                        <a class="purdue-calendar-block__link" href="<?php echo esc_url($event->permalink); ?>">
+                    <h3 class="purdue-calendar-embed__title">
+                        <a class="purdue-calendar-embed__link" href="<?php echo esc_url($event->permalink); ?>">
                             <?php echo esc_html($event->name); ?>
                         </a>
                     </h3>
 
                     <?php if ($category !== '') : ?>
-                        <span class="purdue-calendar-block__category"><?php echo esc_html($category); ?></span>
+                        <span class="purdue-calendar-embed__category"><?php echo esc_html($category); ?></span>
                     <?php endif; ?>
 
                     <?php if ($showDescription && $event->description !== '') : ?>
-                        <p class="purdue-calendar-block__description">
+                        <p class="purdue-calendar-embed__description">
                             <?php echo esc_html(wp_trim_words($event->description, 28)); ?>
                         </p>
                     <?php endif; ?>
@@ -183,8 +183,8 @@ $timeFormat = (string) get_option('time_format', 'g:i a');
 
     <?php if ($result->isStale) : ?>
         <?php
-        echo purdue_calendar_block_notice(
-            __('Showing cached events — the Localist feed is currently unavailable.', 'purdue-calendar-block')
+        echo purdue_calendar_embed_notice(
+            __('Showing cached events — the Localist feed is currently unavailable.', 'purdue-calendar-embed')
         );
         ?>
     <?php endif; ?>

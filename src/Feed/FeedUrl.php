@@ -1,12 +1,12 @@
 <?php
 
 /**
- * @package Purdue/CalendarBlock
+ * @package Purdue/CalendarEmbed
  */
 
 declare(strict_types=1);
 
-namespace Purdue\CalendarBlock\Feed;
+namespace Purdue\CalendarEmbed\Feed;
 
 if (!defined('ABSPATH')) {
     exit;
