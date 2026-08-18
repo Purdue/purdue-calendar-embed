@@ -15,14 +15,14 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Parses the embed snippet produced by Localist's widget builder.
+ * Builds the Localist widget embed from the URL stored on the block.
  *
- * The pasted HTML is never stored or echoed verbatim -- doing so would let anyone who can
- * edit a post inject an arbitrary <script src>. We extract the URL, check it against a
- * host allowlist, and reconstruct the markup ourselves.
- *
- * This mode exists because /widget/view honours `days` and `num`, which calendar.xml
- * ignores. It is the escape hatch for anything the RSS feed cannot express.
+ * The block stores the widget URL, not the pasted snippet. Storing the snippet does not
+ * work: KSES filters block attributes on save and strips <script> out of them, so the tag
+ * never survives to the front end on any site that sets DISALLOW_UNFILTERED_HTML (ours
+ * does, which means not even administrators are exempt). The editor pulls the URL out of
+ * the pasted snippet instead, and we re-check it here -- the editor is convenience, this
+ * class is the trust boundary.
  */
 final class WidgetEmbed
 {
@@ -37,8 +37,39 @@ final class WidgetEmbed
     }
 
     /**
-     * Returns null when the snippet is absent, malformed, or points somewhere we do not
-     * trust. Callers render nothing in that case.
+     * Returns null when the URL is absent, malformed, or points somewhere we do not trust.
+     * Callers render nothing in that case.
+     */
+    public static function fromUrl(string $url, string $containerId): ?self
+    {
+        // KSES rewrites bare `&` to `&amp;` in block attributes on every save, which would
+        // otherwise leave us with a parameter literally named `amp;days` and hide the
+        // existing `container` from remove_query_arg(). The encoding is idempotent, so one
+        // pass is enough to get back to the URL the author pasted.
+        $url = trim(html_entity_decode($url, ENT_QUOTES, 'UTF-8'));
+
+        if (str_starts_with($url, '//')) {
+            $url = 'https:' . $url;
+        }
+
+        if ($url === '' || !self::isAllowed($url)) {
+            return null;
+        }
+
+        // Point the widget at this block instance. The two embeds already in production
+        // both hardcode container="localist-widget-24463163", which collides as soon as
+        // two of them share a page.
+        $url = add_query_arg('container', $containerId, remove_query_arg('container', $url));
+
+        return new self($url, $containerId);
+    }
+
+    /**
+     * Fallback for blocks saved before the URL was stored on its own attribute.
+     *
+     * This only finds anything where the snippet still carries its <script> -- which, on a
+     * site filtering post content through KSES, it will not. Kept so content authored
+     * elsewhere still renders rather than failing silently.
      */
     public static function fromSnippet(string $snippet, string $containerId): ?self
     {
@@ -50,16 +81,11 @@ final class WidgetEmbed
 
         $src = self::extractSrc($snippet);
 
-        if ($src === null || !self::isAllowed($src)) {
+        if ($src === null) {
             return null;
         }
 
-        // Point the widget at this block instance. The two embeds already in production
-        // both hardcode container="localist-widget-24463163", which collides as soon as
-        // two of them share a page.
-        $url = add_query_arg('container', $containerId, remove_query_arg('container', $src));
-
-        return new self($url, $containerId);
+        return self::fromUrl($src, $containerId);
     }
 
     private static function extractSrc(string $snippet): ?string

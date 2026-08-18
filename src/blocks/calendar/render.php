@@ -48,7 +48,8 @@ $mode = in_array($attributes['mode'] ?? 'feed', ['feed', 'widget'], true)
 
 if ($mode === 'widget') {
     $containerId = 'purdue-calendar-widget-' . wp_generate_uuid4();
-    $embed = WidgetEmbed::fromSnippet((string) ($attributes['widgetSnippet'] ?? ''), $containerId);
+    $embed = WidgetEmbed::fromUrl((string) ($attributes['widgetUrl'] ?? ''), $containerId)
+        ?? WidgetEmbed::fromSnippet((string) ($attributes['widgetSnippet'] ?? ''), $containerId);
 
     if ($embed === null) {
         echo purdue_calendar_embed_notice(

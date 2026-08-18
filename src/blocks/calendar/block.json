@@ -23,6 +23,7 @@
     "showImage": { "type": "boolean", "default": true },
     "showDescription": { "type": "boolean", "default": true },
     "showCategory": { "type": "boolean", "default": true },
+    "widgetUrl": { "type": "string", "default": "" },
     "widgetSnippet": { "type": "string", "default": "" }
   },
   "editorScript": "file:./index.js",
