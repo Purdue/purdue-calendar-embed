@@ -32,6 +32,22 @@ define('PURDUE_CALENDAR_EMBED_PATH', plugin_dir_path(__FILE__));
 
 if (file_exists(__DIR__ . '/vendor/autoload.php')) {
     require_once __DIR__ . '/vendor/autoload.php';
+} else {
+    // There are no runtime Composer dependencies, so a plain checkout or zip -- with build/
+    // committed -- only needs our own classes. This is the composer.json PSR-4 mapping.
+    spl_autoload_register(static function (string $class): void {
+        $prefix = __NAMESPACE__ . '\\';
+
+        if (!str_starts_with($class, $prefix)) {
+            return;
+        }
+
+        $file = __DIR__ . '/src/' . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
+
+        if (is_file($file)) {
+            require_once $file;
+        }
+    });
 }
 
 new Plugin();

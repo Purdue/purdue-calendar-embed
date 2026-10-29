@@ -3,6 +3,18 @@
 A WordPress block that renders Localist events from the [events.purdue.edu](https://events.purdue.edu)
 RSS feed, with the Localist widget embed available as a fallback rendering mode.
 
+## Installing
+
+The repository is the plugin. `build/` is committed and there are no runtime Composer
+dependencies, so no build tools are needed on the server:
+
+1. Put the repository in `wp-content/plugins/purdue-calendar-embed/`, either with `git clone` or by
+   unzipping a download into a folder with that name.
+2. Activate **Purdue Calendar Embed** in **Plugins**.
+
+The folder name matters. WordPress identifies the plugin as `purdue-calendar-embed/index.php`, so a
+copy in a different folder is treated as a different plugin.
+
 ## Getting started
 
 ```bash
@@ -164,23 +176,18 @@ than WordPress Coding Standards.
 binding a port is blocked (some sandboxes), run `vendor/bin/phpstan analyse --memory-limit=1G
 --debug` instead.
 
+`build/` is committed, because it is what ships. Run `npm run build` and commit its output with
+every change under `src/blocks/`. The block is registered from `build/`, so a stale build ships
+stale code.
+
 ## Deploying
 
-The plugin is not published to the Composer repository at
-[purdue.github.io](https://github.com/Purdue/purdue.github.io), and `build/` is gitignored, so
-neither a git checkout nor a Composer install from GitHub includes the built block. The block is
-registered from `build/`; without it the plugin activates but no block appears.
+Deploy the repository as described in [Installing](#installing). `vendor/` is optional on the
+server. `index.php` uses it when present, and otherwise autoloads the plugin's own classes from
+`src/`, which are all it needs at runtime.
 
-Deploy the built plugin by copying files:
-
-```bash
-npm run build
-composer install --no-dev   # runtime autoloader only
-```
-
-Copy `index.php`, `composer.json`, `src/`, `build/` and `vendor/` to
-`wp-content/plugins/purdue-calendar-embed/`, then activate the plugin. Run `composer install`
-again afterwards to restore the dev tools locally.
+The plugin is not yet published to the Composer repository at
+[purdue.github.io](https://github.com/Purdue/purdue.github.io).
 
 ## Licence
 

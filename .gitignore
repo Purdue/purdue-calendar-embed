@@ -11,8 +11,7 @@ Thumbs.db
 node_modules/
 /vendor/
 
-# Build output
-/build/
+# Build output (build/ is committed -- it is what ships)
 /dist/
 *.zip
 
