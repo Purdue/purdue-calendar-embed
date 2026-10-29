@@ -18,6 +18,31 @@ npm run env start     # requires Docker (or Colima)
 npm start             # rebuild on change
 ```
 
+## Using the block
+
+Activate the plugin on the site. In the block inserter the block is **Purdue Calendar**, under
+**Widgets** (not the theme's **Purdue** category); searching "calendar", "events" or "localist"
+also finds it.
+
+The step-by-step guide for site editors is the **Website Integration → WordPress** section of
+Brand Studio's [Events Calendar](https://www.purdue.edu/brand-studio/toolbox/event-calendar/)
+page. It covers widget mode only for now. Keep it in step with this README when the editor
+experience changes.
+
+Feed-mode times are shown in the site's timezone (**Settings → General**). A site left on UTC shows
+every event four or five hours late.
+
+### With purdue-home-theme
+
+The block needs nothing from [`purdue-home-theme`](https://github.com/Purdue/purdue-home-theme).
+The plugin registers `purdue/calendar` and ships its own stylesheet, so it works under any theme.
+
+Do not add `calendar` to the theme's `$purdueBlocks` list in `inc/blocks.php`. That list is for
+blocks built inside the theme, and the theme deregisters every `purdue-<block>-*` asset handle in
+it. Those include `purdue-calendar-style` and `purdue-calendar-editor-script`, which are this
+plugin's handles, so the block would lose its styles on the front end and its script in the
+editor. For the same reason, the theme must never get a block of its own named `calendar`.
+
 ## The two modes
 
 The block has one setting that matters more than the rest: **Mode**.
@@ -30,13 +55,32 @@ site's own styles.
 
 ### Widget mode
 
-You paste the embed snippet that Localist's widget builder generates and the block reproduces
-it. Use this when you need something the RSS feed cannot express — most often `days` and `num`,
-which `/widget/view` honours and `calendar.xml` ignores.
+You paste the embed snippet that Localist's widget builder generates (or just the widget URL)
+and the block reproduces it. Use this when you need something the RSS feed cannot express — most
+often `days` and `num`, which `/widget/view` honours and `calendar.xml` ignores.
 
-The pasted HTML is never stored or echoed verbatim. The block extracts the script URL, checks it
-against a host allowlist (`events.purdue.edu`, `*.localist.com`, HTTPS, `/widget/view` path only)
-and rebuilds the markup itself, rewriting the `container` ID so two widgets can share a page.
+Only the script URL is saved, in the `widgetUrl` attribute. The paste box is not saved: after a
+reload it is empty, and the **Using widget URL** notice below it shows what the block will render.
+The snippet cannot be stored because WordPress runs block attributes through KSES on save and
+strips `<script>` from them. The Purdue sites set `DISALLOW_UNFILTERED_HTML`, so this applies to
+administrators too. KSES also rewrites `&` to `&amp;` in the saved URL, and the server decodes it
+before use.
+
+On render, the server checks the URL again against a host allowlist (`events.purdue.edu`,
+`*.localist.com`, HTTPS, `/widget/view` path only; protocol-relative `//` URLs are treated as
+HTTPS). It then rebuilds the markup itself and replaces the `container` parameter, so two widgets
+can share a page. Blocks saved before `widgetUrl` existed fall back to the old `widgetSnippet`
+attribute, which only works where the `<script>` tag survived the save.
+
+### When nothing renders
+
+Both modes render nothing on the front end when they fail: a rejected widget URL, a feed error with
+no cached copy, or no events matching the filters. The reason is shown only in the editor, so check
+the block there first.
+
+A feed error also marks the page as not cacheable (`DONOTCACHEPAGE`), so page caches such as WP
+Super Cache don't keep the empty render after the feed recovers. Pages cached by a version without
+this need their page cache cleared once.
 
 ## What the RSS feed can and cannot do
 
@@ -53,7 +97,11 @@ widget builder's:
 | `/calendar/week.xml`, `/calendar/2026/9/1.xml` | **No** — both redirect to plain `calendar.xml` |
 
 Because `days` and `num` do nothing, the **Days ahead** and **Number of events** controls are
-applied in PHP after fetching. The feed itself always returns roughly eleven months of events.
+applied in PHP after fetching. The feed itself always returns about a year of events.
+
+**Hide past events** hides any event whose start time has passed, including events in progress.
+Because the feed has no all-day flag (see below), all-day events start at midnight and disappear
+from the list on their own day.
 
 The feed also does not carry:
 
@@ -70,8 +118,8 @@ Getting these fields would mean extending `calendar/_feed_event.html.liquid` in 
 
 ## Caching
 
-Caching is a correctness requirement, not an optimisation. The unfiltered feed is ~1.7 MB across
-750+ items, and the origin rate-limits hard — it returns `x-ratelimit-remaining: 0` and HTTP 429
+Caching is a correctness requirement, not an optimisation. The unfiltered feed is ~2 MB across
+about 1,000 items, and the origin rate-limits hard — it returns `x-ratelimit-remaining: 0` and HTTP 429
 under even light polling.
 
 So the block caches **normalized events**, not raw XML:
@@ -79,6 +127,14 @@ So the block caches **normalized events**, not raw XML:
 - a fresh copy for 10 minutes, matching the origin's own `cache-control: max-age=600`,
 - a stale copy for 24 hours, served whenever the origin errors, rate-limits, or returns nothing.
   When that happens the editor sees a notice; the front end still renders events.
+
+After a failed fetch the block leaves the origin alone for one minute and serves the stale copy,
+or nothing, in the meantime. A failure can take the full 15-second request timeout, and failed
+renders are kept out of page caches, so without the pause every uncached page view during an
+outage would wait out the timeout again and add to the rate limiting.
+
+The first fetch on a new site has no stale copy to fall back on. The ~2 MB download can hit the
+timeout, and the block then renders nothing until a later request succeeds.
 
 Adjust the fresh TTL with:
 
@@ -104,6 +160,28 @@ npm run build
 PHP follows **PSR-12 with PSR-4 autoloading**, matching the other Purdue WordPress repos rather
 than WordPress Coding Standards.
 
+`composer analyze` runs PHPStan in parallel worker processes over a local TCP port. Where
+binding a port is blocked (some sandboxes), run `vendor/bin/phpstan analyse --memory-limit=1G
+--debug` instead.
+
+## Deploying
+
+The plugin is not published to the Composer repository at
+[purdue.github.io](https://github.com/Purdue/purdue.github.io), and `build/` is gitignored, so
+neither a git checkout nor a Composer install from GitHub includes the built block. The block is
+registered from `build/`; without it the plugin activates but no block appears.
+
+Deploy the built plugin by copying files:
+
+```bash
+npm run build
+composer install --no-dev   # runtime autoloader only
+```
+
+Copy `index.php`, `composer.json`, `src/`, `build/` and `vendor/` to
+`wp-content/plugins/purdue-calendar-embed/`, then activate the plugin. Run `composer install`
+again afterwards to restore the dev tools locally.
+
 ## Licence
 
-GPL-3.0-or-later. See [LICENSE](LICENSE).
+GPL-3.0-or-later, as declared in the plugin header.
