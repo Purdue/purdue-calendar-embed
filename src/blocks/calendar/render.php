@@ -123,6 +123,9 @@ if ($events === []) {
     return;
 }
 
+$headingLevel = (int) ($attributes['headingLevel'] ?? 3);
+$headingTag = 'h' . ($headingLevel >= 2 && $headingLevel <= 6 ? $headingLevel : 3);
+
 $showImage = (bool) ($attributes['showImage'] ?? true);
 $showDescription = (bool) ($attributes['showDescription'] ?? true);
 $showCategory = (bool) ($attributes['showCategory'] ?? true);
@@ -169,11 +172,11 @@ $timeFormat = (string) get_option('time_format', 'g:i a');
                         </time>
                     <?php endif; ?>
 
-                    <h3 class="purdue-calendar-embed__title">
+                    <<?php echo $headingTag; // phpcs:ignore -- h2..h6 only, built above. ?> class="purdue-calendar-embed__title">
                         <a class="purdue-calendar-embed__link" href="<?php echo esc_url($event->permalink); ?>">
                             <?php echo esc_html($event->name); ?>
                         </a>
-                    </h3>
+                    </<?php echo $headingTag; // phpcs:ignore -- h2..h6 only, built above. ?>>
 
                     <?php if ($category !== '') : ?>
                         <span class="purdue-calendar-embed__category"><?php echo esc_html($category); ?></span>

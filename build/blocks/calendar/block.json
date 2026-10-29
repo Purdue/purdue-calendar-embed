@@ -2,7 +2,7 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "purdue/calendar",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "title": "Purdue Calendar",
   "category": "widgets",
   "description": "Renders Localist events from the events.purdue.edu RSS feed, or embeds a Localist widget.",
@@ -47,6 +47,10 @@
     "layout": {
       "type": "string",
       "default": "list"
+    },
+    "headingLevel": {
+      "type": "number",
+      "default": 3
     },
     "showImage": {
       "type": "boolean",

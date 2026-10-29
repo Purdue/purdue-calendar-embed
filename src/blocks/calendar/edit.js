@@ -36,6 +36,12 @@ const LAYOUTS = [
   { label: __("Cards", "purdue-calendar-embed"), value: "cards" },
 ];
 
+// Event titles are headings, so the level has to fit the page's outline (WCAG 1.3.1).
+const HEADING_LEVELS = [2, 3, 4, 5, 6].map((level) => ({
+  label: `H${level}`,
+  value: String(level),
+}));
+
 const ALLOWED_HOSTS = ["events.purdue.edu", "localist.com"];
 const WIDGET_PATH = "/widget/view";
 
@@ -105,6 +111,7 @@ export default function Edit({ attributes, setAttributes }) {
     windowDays,
     hidePast,
     layout,
+    headingLevel,
     showImage,
     showDescription,
     showCategory,
@@ -248,6 +255,19 @@ export default function Edit({ attributes, setAttributes }) {
                 value={layout}
                 options={LAYOUTS}
                 onChange={(value) => setAttributes({ layout: value })}
+                __nextHasNoMarginBottom
+              />
+              <SelectControl
+                label={__("Event title heading level", "purdue-calendar-embed")}
+                value={String(headingLevel)}
+                options={HEADING_LEVELS}
+                onChange={(value) =>
+                  setAttributes({ headingLevel: Number(value) })
+                }
+                help={__(
+                  "Pick the level that follows the heading above the block, so the page outline stays in order.",
+                  "purdue-calendar-embed",
+                )}
                 __nextHasNoMarginBottom
               />
               <ToggleControl
