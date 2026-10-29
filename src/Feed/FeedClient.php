@@ -27,11 +27,20 @@ final class FeedClient
 {
     private const CACHE_PREFIX = 'pcb_feed_';
     private const STALE_PREFIX = 'pcb_stale_';
+    private const FAILURE_PREFIX = 'pcb_fail_';
 
     /** Matches the origin's own `cache-control: max-age=600`. */
     private const DEFAULT_TTL = 10 * MINUTE_IN_SECONDS;
 
     private const STALE_TTL = DAY_IN_SECONDS;
+
+    /**
+     * How long to stop asking the origin after a failed fetch. A failure can take the full
+     * 15-second timeout, and the block stops page caches from keeping a failed render, so
+     * without this every uncached view during an outage would wait out the timeout again
+     * and add to the rate limiting that probably caused it.
+     */
+    private const RETRY_AFTER = MINUTE_IN_SECONDS;
 
     public function __construct(private readonly FeedParser $parser = new FeedParser())
     {
@@ -49,16 +58,22 @@ final class FeedClient
             return new FeedResult($this->hydrate($cached));
         }
 
+        $failure = get_transient(self::FAILURE_PREFIX . $key);
+
+        if (is_string($failure)) {
+            return $this->fallback($key, new WP_Error('purdue_calendar_embed_retry_later', $failure));
+        }
+
         $rss = $this->fetchFeed($url);
 
         if ($rss instanceof WP_Error) {
-            return $this->fallback($key, $rss);
+            return $this->fail($key, $rss);
         }
 
         $quantity = $rss->get_item_quantity();
 
         if ($quantity === 0) {
-            return $this->fallback(
+            return $this->fail(
                 $key,
                 new WP_Error(
                     'purdue_calendar_embed_empty_feed',
@@ -77,6 +92,21 @@ final class FeedClient
         set_transient(self::STALE_PREFIX . $key, $serialized, self::STALE_TTL);
 
         return new FeedResult($events);
+    }
+
+    /**
+     * Record a failed fetch so the origin is left alone for RETRY_AFTER, then fall back.
+     *
+     * The error message is kept so the editor can still say what went wrong while
+     * requests are being skipped.
+     *
+     * @return FeedResult|WP_Error
+     */
+    private function fail(string $key, WP_Error $error): FeedResult|WP_Error
+    {
+        set_transient(self::FAILURE_PREFIX . $key, $error->get_error_message(), self::RETRY_AFTER);
+
+        return $this->fallback($key, $error);
     }
 
     /**

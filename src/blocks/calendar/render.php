@@ -92,6 +92,13 @@ $url = (new FeedUrl())->build(
 $result = (new FeedClient())->fetch($url);
 
 if (is_wp_error($result)) {
+    // The front end renders nothing here. Without this, a page cache keeps that empty page
+    // long after the feed recovers -- WP Super Cache did exactly that on brand-studio after a
+    // cold fetch timed out. WP Super Cache, W3TC, WP Rocket and LiteSpeed all honour it.
+    if (!defined('DONOTCACHEPAGE')) {
+        define('DONOTCACHEPAGE', true);
+    }
+
     echo purdue_calendar_embed_notice(
         sprintf(
             /* translators: %s: error message from the feed request. */
