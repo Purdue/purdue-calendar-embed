@@ -1,5 +1,5 @@
 {
-    "name": "purdue/calendar-embed",
+    "name": "purdue/purdue-calendar-embed",
     "description": "Gutenberg block that renders Localist events from the events.purdue.edu RSS feed",
     "type": "wordpress-plugin",
     "license": "GPL-3.0-or-later",
@@ -10,6 +10,11 @@
             "homepage": "https://marcom.purdue.edu"
         }
     ],
+    "support": {
+        "email": "digital-marketing@groups.purdue.edu",
+        "issues": "https://github.com/Purdue/purdue-calendar-embed/issues",
+        "source": "https://github.com/Purdue/purdue-calendar-embed"
+    },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {

@@ -3,17 +3,33 @@
 A WordPress block that renders Localist events from the [events.purdue.edu](https://events.purdue.edu)
 RSS feed, with the Localist widget embed available as a fallback rendering mode.
 
+Requires WordPress 6.5+ and PHP 8.1+.
+
 ## Installing
 
-The repository is the plugin. `build/` is committed and there are no runtime Composer
-dependencies, so no build tools are needed on the server:
+Download `purdue-calendar-embed-<version>.zip` from the
+[latest release](https://github.com/Purdue/purdue-calendar-embed/releases/latest) and install it
+with **Plugins → Add New → Upload Plugin**, or unzip it into `wp-content/plugins/`. Then activate
+**Purdue Calendar Embed**.
 
-1. Put the repository in `wp-content/plugins/purdue-calendar-embed/`, either with `git clone` or by
-   unzipping a download into a folder with that name.
-2. Activate **Purdue Calendar Embed** in **Plugins**.
+You can also `git clone` the repository into `wp-content/plugins/purdue-calendar-embed/`. `build/`
+is committed and there are no runtime Composer dependencies, so no build tools are needed on the
+server either way.
 
 The folder name matters. WordPress identifies the plugin as `purdue-calendar-embed/index.php`, so a
-copy in a different folder is treated as a different plugin.
+copy in a different folder (for example the `purdue-calendar-embed-main` folder that GitHub's
+**Download ZIP** creates) is treated as a different plugin. The release zip already has the right
+folder name.
+
+Sites that are not managed with Composer don't update automatically. To upgrade, install the new
+release zip over the old one.
+
+## Support
+
+Report bugs and request features in
+[GitHub issues](https://github.com/Purdue/purdue-calendar-embed/issues). For questions, email
+Purdue Marketing and Communications at
+[digital-marketing@groups.purdue.edu](mailto:digital-marketing@groups.purdue.edu).
 
 ## Getting started
 
@@ -44,10 +60,13 @@ experience changes.
 Feed-mode times are shown in the site's timezone (**Settings → General**). A site left on UTC shows
 every event four or five hours late.
 
+Event titles are headings. Set **Display → Event title heading level** to the level that follows
+the heading above the block, so the page's heading outline stays in order. The default is H3.
+
 ### With purdue-home-theme
 
-The block needs nothing from [`purdue-home-theme`](https://github.com/Purdue/purdue-home-theme).
-The plugin registers `purdue/calendar` and ships its own stylesheet, so it works under any theme.
+The block needs nothing from `purdue-home-theme`, Purdue's WordPress theme. The plugin registers
+`purdue/calendar` and ships its own stylesheet, so it works under any theme.
 
 Do not add `calendar` to the theme's `$purdueBlocks` list in `inc/blocks.php`. That list is for
 blocks built inside the theme, and the theme deregisters every `purdue-<block>-*` asset handle in
@@ -124,8 +143,8 @@ The feed also does not carry:
   intact.
 
 The `xCal` namespace is declared on the channel but no `xCal:` elements are ever emitted.
-Getting these fields would mean extending `calendar/_feed_event.html.liquid` in the
-[`localist-theme`](https://github.com/Purdue/localist-theme) repo, which controls the RSS
+Getting these fields would mean extending `calendar/_feed_event.html.liquid` in Purdue's Localist
+theme (`localist-theme`, maintained by Marketing and Communications), which controls the RSS
 `<description>` body. That is deliberately out of scope for now.
 
 ## Caching
@@ -178,16 +197,38 @@ binding a port is blocked (some sandboxes), run `vendor/bin/phpstan analyse --me
 
 `build/` is committed, because it is what ships. Run `npm run build` and commit its output with
 every change under `src/blocks/`. The block is registered from `build/`, so a stale build ships
-stale code.
+stale code. CI rebuilds on every push and pull request, and fails if the committed `build/`
+differs.
+
+Changes are reviewed by `@Purdue/marketing` (see `.github/CODEOWNERS`).
 
 ## Deploying
 
-Deploy the repository as described in [Installing](#installing). `vendor/` is optional on the
-server. `index.php` uses it when present, and otherwise autoloads the plugin's own classes from
-`src/`, which are all it needs at runtime.
+Deploy a release as described in [Installing](#installing). `vendor/` is optional on the server.
+`index.php` uses it when present, and otherwise autoloads the plugin's own classes from `src/`,
+which are all it needs at runtime.
 
 The plugin is not yet published to the Composer repository at
-[purdue.github.io](https://github.com/Purdue/purdue.github.io).
+[purdue.github.io](https://github.com/Purdue/purdue.github.io). Once it is, Composer-managed sites
+can install it with `composer require purdue/purdue-calendar-embed`. That needs
+`composer/installers` in the site's project, which places it in
+`wp-content/plugins/purdue-calendar-embed/`.
+
+## Releasing
+
+1. Set the same `X.Y.Z` in four places: `Version:` and `PURDUE_CALENDAR_EMBED_VERSION` in
+   `index.php`, `version` in `src/blocks/calendar/block.json`, and `version` in `package.json`
+   (run `npm version X.Y.Z --no-git-tag-version` so `package-lock.json` follows).
+2. Run `npm run build` and commit everything as `Version Bump X.Y.Z` on `main`.
+3. Tag `X.Y.Z` and push the tag. Composer reads versions from tags.
+4. Build the release zip from the tag. `.gitattributes` keeps development files out of it:
+
+   ```bash
+   git archive --format=zip --prefix=purdue-calendar-embed/ \
+     -o purdue-calendar-embed-X.Y.Z.zip X.Y.Z
+   ```
+
+5. Create a GitHub release for the tag and attach the zip.
 
 ## Licence
 

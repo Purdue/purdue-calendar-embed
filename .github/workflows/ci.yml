@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.1"
+          tools: composer
+
+      - run: composer install --no-interaction --no-progress
+      - run: composer lint
+      - run: composer analyze
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # build/ is committed because it is what ships. Rebuild it and fail if the committed
+      # copy differs, so a src/ change can't go out with a stale build.
+      - run: npm run build
+      - name: build/ matches src/
+        run: |
+          if [ -n "$(git status --porcelain -- build/)" ]; then
+            git status --short -- build/
+            echo "::error::build/ is out of date. Run npm run build and commit the result."
+            exit 1
+          fi
