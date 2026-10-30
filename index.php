@@ -8,7 +8,7 @@
  * Plugin Name: Purdue Calendar Embed
  * Plugin URI: https://github.com/Purdue/purdue-calendar-embed
  * Description: Gutenberg block that renders Localist events from the events.purdue.edu RSS feed, with a Localist widget embed as a fallback rendering mode.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Purdue Marketing and Communications
  * Author URI: https://marcom.purdue.edu
  * License: GPL-3.0-or-later
@@ -27,7 +27,7 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly.
 }
 
-define('PURDUE_CALENDAR_EMBED_VERSION', '1.0.0');
+define('PURDUE_CALENDAR_EMBED_VERSION', '1.0.1');
 define('PURDUE_CALENDAR_EMBED_FILE', __FILE__);
 define('PURDUE_CALENDAR_EMBED_PATH', plugin_dir_path(__FILE__));
 

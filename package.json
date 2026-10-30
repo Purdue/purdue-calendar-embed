@@ -1,6 +1,6 @@
 {
   "name": "purdue-calendar-embed",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Gutenberg block that renders Localist events from the events.purdue.edu RSS feed",
   "license": "GPL-3.0-or-later",
   "private": true,
