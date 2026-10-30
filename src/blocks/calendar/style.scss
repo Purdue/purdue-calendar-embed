@@ -1,7 +1,11 @@
+// Matches the purdue-home-theme "News and events" listing: black titles, gold as accent.
 .purdue-calendar-embed {
   --pce-gold: #cfb991;
-  --pce-rule: #e0e0e0;
-  --pce-muted: #555;
+  --pce-aged-gold: #8e6f3e;
+  // Darker than aged gold so small uppercase text clears WCAG AA (about 7:1 on white).
+  --pce-gold-text: #6f5630;
+  --pce-rule: #c4bfc0;
+  --pce-muted: #4d4d4d;
 
   &__list {
     list-style: none;
@@ -11,9 +15,10 @@
 
   &__item {
     display: flex;
-    gap: 1rem;
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--pce-rule);
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1.25rem 0;
+    border-bottom: 2px solid var(--pce-rule);
 
     &:last-child {
       border-bottom: 0;
@@ -30,6 +35,7 @@
     height: 100%;
     max-height: 6rem;
     object-fit: cover;
+    border-radius: 4px;
   }
 
   &__body {
@@ -40,35 +46,53 @@
   &__date {
     display: block;
     font-size: 0.8125rem;
-    color: var(--pce-muted);
+    font-weight: 600;
+    line-height: 1.3;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--pce-gold-text);
   }
 
-  &__title {
-    margin: 0.25rem 0;
-    font-size: 1.0625rem;
+  // Doubled class so these beat the theme's generic rules: `h3:not(:first-child)` adds a
+  // 2.5rem top margin (0,1,1), and `a` sets aged gold at weight 600. The title tag varies
+  // (h2–h6, per the block's heading level setting), so it can't be matched by element.
+  & &__title {
+    margin: 0.3rem 0 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
     line-height: 1.3;
   }
 
-  &__link {
+  & &__link {
+    color: #000;
+    font-weight: 700;
     text-decoration: none;
 
     &:hover,
     &:focus {
       text-decoration: underline;
+      text-decoration-color: var(--pce-aged-gold);
+      text-decoration-thickness: 2px;
+      text-underline-offset: 3px;
     }
   }
 
   &__category {
     display: inline-block;
-    padding: 0.125rem 0.5rem;
-    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-radius: 2px;
     background: var(--pce-gold);
     color: #000;
   }
 
   &__description {
     margin: 0.5rem 0 0;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
     color: var(--pce-muted);
   }
 
