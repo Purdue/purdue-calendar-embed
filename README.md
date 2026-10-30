@@ -84,6 +84,11 @@ PHP fetches `calendar.xml`, normalizes each item, caches the result, and server-
 list. This is the mode to use — the markup is yours, it is cacheable, and it works with the
 site's own styles.
 
+The feed links each event photo at Localist's "huge" size (580–750 px, often 100–400 KB). In the
+list layout, which shows a 128×96 thumbnail, the block requests Localist's 4:3 "big" (200×150)
+and "big_300" (300×225) sizes instead through `srcset`. That cuts photo weight roughly eightfold.
+The cards layout shows photos much wider and keeps the "huge" size.
+
 ### Widget mode
 
 You paste the embed snippet that Localist's widget builder generates (or just the widget URL)
@@ -164,8 +169,26 @@ or nothing, in the meantime. A failure can take the full 15-second request timeo
 renders are kept out of page caches, so without the pause every uncached page view during an
 outage would wait out the timeout again and add to the rate limiting.
 
-The first fetch on a new site has no stale copy to fall back on. The ~2 MB download can hit the
-timeout, and the block then renders nothing until a later request succeeds.
+### Background refresh
+
+A page render never waits on the origin while any copy is cached. Once the fresh copy expires,
+the block serves the stale copy straight away and queues a WP-Cron event
+(`purdue_calendar_embed_refresh_feed`, with the feed URL as its argument) to refetch in the
+background. The next render after that picks up the new events. Only one refresh is queued per
+feed at a time, and the event re-checks the URL against the feed host allowlist before fetching.
+
+WP-Cron normally starts on a request that loads WordPress, and page-cached views don't. So the
+block starts it right away with `spawn_cron()`, a non-blocking loopback request, unless the site
+sets `DISABLE_WP_CRON` (cron runs from a system scheduler) or `ALTERNATE_WP_CRON`. If the event
+can't be scheduled, the block fetches inline as it did before 1.0.1.
+
+Because "Hide past events" is applied on every render, a slightly older copy never shows events
+that have already started. The only thing that can lag is newly added events.
+
+The first fetch for a feed, meaning a new block or new filter settings, still happens inline,
+because there is no copy yet. That is usually the editor preview, while the block is being set up.
+The ~2 MB download can hit the timeout, and the block then renders nothing until a later request
+succeeds.
 
 Adjust the fresh TTL with:
 

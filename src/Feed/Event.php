@@ -107,4 +107,21 @@ final class Event
 
         return $this->categories[0] ?? '';
     }
+
+    /**
+     * The event photo at another Localist rendition, e.g. "big" (200×150) or "big_300"
+     * (300×225).
+     *
+     * The feed only links the "huge" rendition (580–750 px, often 100–400 KB). Localist
+     * serves every rendition of a photo at the same path with the size segment swapped.
+     * Returns '' when the URL isn't in that form, so callers can fall back to `imageUrl`.
+     */
+    public function imageUrlAt(string $size): string
+    {
+        if (preg_match('#^(https://[^/]+/photos/\d+/)huge/([^/?\#]+)$#', $this->imageUrl, $parts) !== 1) {
+            return '';
+        }
+
+        return $parts[1] . $size . '/' . $parts[2];
+    }
 }

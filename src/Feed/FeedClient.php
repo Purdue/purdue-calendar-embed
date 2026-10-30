@@ -18,13 +18,19 @@ if (!defined('ABSPATH')) {
  * Fetches and caches a Localist RSS feed.
  *
  * Caching is a correctness requirement here, not an optimisation. The unfiltered
- * events.purdue.edu feed is ~1.7 MB / 750+ items spanning eleven months, and the origin
+ * events.purdue.edu feed is ~2 MB / ~1,000 items spanning about a year, and the origin
  * rate-limits aggressively -- it returns `x-ratelimit-remaining: 0` and HTTP 429 under
  * even light polling. So we cache the *normalized* events rather than the raw XML, and
  * keep a longer-lived stale copy to serve when the origin refuses us.
+ *
+ * Once the fresh copy expires, the stale copy is served straight away and the refetch runs
+ * in a WP-Cron event, so a page render never waits on the origin while any copy exists.
  */
 final class FeedClient
 {
+    /** WP-Cron hook for the background refetch; its single argument is the feed URL. */
+    public const REFRESH_HOOK = 'purdue_calendar_embed_refresh_feed';
+
     private const CACHE_PREFIX = 'pcb_feed_';
     private const STALE_PREFIX = 'pcb_stale_';
     private const FAILURE_PREFIX = 'pcb_fail_';
@@ -64,6 +70,28 @@ final class FeedClient
             return $this->fallback($key, new WP_Error('purdue_calendar_embed_retry_later', $failure));
         }
 
+        // Past the fresh TTL but still holding a copy: serve it and refetch in the background.
+        // The refetch is a ~2 MB download and a thousand-item parse, and on a cold origin it has
+        // taken the full 15-second timeout. If the event can't be scheduled, fetch inline as
+        // before.
+        $stale = get_transient(self::STALE_PREFIX . $key);
+
+        if (is_array($stale) && $stale !== [] && $this->scheduleRefresh($url)) {
+            return new FeedResult($this->hydrate($stale));
+        }
+
+        return $this->refresh($url);
+    }
+
+    /**
+     * Fetch from the origin now and update the cache. Runs inline when nothing is cached, and
+     * from WP-Cron (REFRESH_HOOK) otherwise.
+     *
+     * @return FeedResult|WP_Error
+     */
+    public function refresh(string $url): FeedResult|WP_Error
+    {
+        $key = md5($url);
         $rss = $this->fetchFeed($url);
 
         if ($rss instanceof WP_Error) {
@@ -92,6 +120,37 @@ final class FeedClient
         set_transient(self::STALE_PREFIX . $key, $serialized, self::STALE_TTL);
 
         return new FeedResult($events);
+    }
+
+    /**
+     * Queue a background refetch of this feed, unless one is already queued.
+     */
+    private function scheduleRefresh(string $url): bool
+    {
+        $args = [$url];
+
+        if (
+            wp_next_scheduled(self::REFRESH_HOOK, $args) === false
+            && wp_schedule_single_event(time(), self::REFRESH_HOOK, $args) !== true
+        ) {
+            return false;
+        }
+
+        // WP-Cron only starts on a request that loads WordPress, and page-cached views don't.
+        // Start it now rather than wait for the next uncached request -- unless the site runs
+        // cron some other way. ALTERNATE_WP_CRON in particular would run the queue inside this
+        // render via a redirect.
+        if (!$this->siteRunsCronElsewhere()) {
+            spawn_cron();
+        }
+
+        return true;
+    }
+
+    private function siteRunsCronElsewhere(): bool
+    {
+        return (defined('DISABLE_WP_CRON') && constant('DISABLE_WP_CRON'))
+            || (defined('ALTERNATE_WP_CRON') && constant('ALTERNATE_WP_CRON'));
     }
 
     /**

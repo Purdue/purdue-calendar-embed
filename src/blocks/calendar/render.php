@@ -144,17 +144,37 @@ $timeFormat = (string) get_option('time_format', 'g:i a');
             <?php
             /** @var Event $event */
             $category = $showCategory ? $event->primaryCategory() : '';
+
+            // List thumbnails are 128×96 (4:3). The feed's "huge" photo is up to 750 px and
+            // ~400 KB, so offer Localist's 4:3 renditions instead: "big" (200×150) covers 1x
+            // and "big_300" (300×225) covers 2x. Cards show the photo much wider, so they keep
+            // the full-size one.
+            $thumbSrc = $layout === 'list' ? $event->imageUrlAt('big') : '';
             ?>
             <li class="purdue-calendar-embed__item">
                 <?php if ($showImage && $event->imageUrl !== '') : ?>
                     <div class="purdue-calendar-embed__media">
-                        <img
-                            class="purdue-calendar-embed__image"
-                            src="<?php echo esc_url($event->imageUrl); ?>"
-                            alt=""
-                            loading="lazy"
-                            decoding="async"
-                        />
+                        <?php if ($thumbSrc !== '') : ?>
+                            <img
+                                class="purdue-calendar-embed__image"
+                                src="<?php echo esc_url($thumbSrc); ?>"
+                                srcset="<?php echo esc_attr($thumbSrc . ' 200w, ' . $event->imageUrlAt('big_300') . ' 300w'); ?>"
+                                sizes="8rem"
+                                width="200"
+                                height="150"
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                            />
+                        <?php else : ?>
+                            <img
+                                class="purdue-calendar-embed__image"
+                                src="<?php echo esc_url($event->imageUrl); ?>"
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                            />
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
 
