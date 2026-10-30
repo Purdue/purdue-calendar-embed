@@ -208,11 +208,9 @@ Deploy a release as described in [Installing](#installing). `vendor/` is optiona
 `index.php` uses it when present, and otherwise autoloads the plugin's own classes from `src/`,
 which are all it needs at runtime.
 
-The plugin is not yet published to the Composer repository at
-[purdue.github.io](https://github.com/Purdue/purdue.github.io). Once it is, Composer-managed sites
-can install it with `composer require purdue/purdue-calendar-embed`. That needs
-`composer/installers` in the site's project, which places it in
-`wp-content/plugins/purdue-calendar-embed/`.
+Composer-managed sites that use Purdue's Composer repository (`https://purdue.github.io`) can
+install it with `composer require purdue/purdue-calendar-embed`. That needs `composer/installers`
+in the site's project, which places it in `wp-content/plugins/purdue-calendar-embed/`.
 
 ## Releasing
 
@@ -229,6 +227,11 @@ can install it with `composer require purdue/purdue-calendar-embed`. That needs
    ```
 
 5. Create a GitHub release for the tag and attach the zip.
+6. Rebuild the package on purdue.github.io. Follow the build guide in
+   [`Purdue/satis-theme`](https://github.com/Purdue/satis-theme) (Purdue access required), scoping
+   the build to this repo by adding
+   `--repository-url 'git@github.com:Purdue/purdue-calendar-embed/'` to its build command. This
+   repo is public, so the scoped build needs no SSH key or GitHub token.
 
 ## Licence
 
