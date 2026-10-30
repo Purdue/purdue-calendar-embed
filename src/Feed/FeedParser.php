@@ -111,7 +111,35 @@ final class FeedParser
             $description
         );
 
-        return trim(wp_strip_all_tags($description));
+        return $this->withoutUrls(trim(wp_strip_all_tags($description)));
+    }
+
+    /**
+     * Drop bare URLs from the description text.
+     *
+     * About 40% of items carry one, almost always at the end: every Athletics event ends with
+     * its purduesports.com boxscore link, and others end "Flyer: https://…" or "Register here:
+     * https://…". Unlinked, in a trimmed one-line summary, they read as noise, and the title
+     * already links to the event page. The cleanup tidies what removal leaves behind: empty
+     * brackets, a space before punctuation, and a dangling "Label:" at the very end.
+     */
+    private function withoutUrls(string $text): string
+    {
+        $url = '#(?:https?://|www\.)[^\s<>"]+#iu';
+
+        if (preg_match($url, $text) !== 1) {
+            return $text;
+        }
+
+        $text = (string) preg_replace($url, '', $text);
+        $text = (string) preg_replace('/\(\s*\)|\[\s*\]/u', '', $text);
+        $text = (string) preg_replace('/\s+([.,;:!?)\]])/u', '$1', $text);
+        $text = (string) preg_replace('/\s{2,}/u', ' ', $text);
+        // A closing phrase ending in a colon only ever introduced the URL that is now gone
+        // ("Flyer:", "Register here:", "More information can be found on our website at:").
+        $text = (string) preg_replace('/(^|[.!?])\s*[^.!?:]{1,120}:$/u', '$1', trim($text));
+
+        return (string) preg_replace('/[\s;,]+$/u', '', trim($text));
     }
 
     /**
